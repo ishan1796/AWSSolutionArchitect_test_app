@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard // AWS SAA-C03 Quiz Platform{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid" style="margin-top: 20px;">
+    <!-- LEFT PANEL: STATS & QUIZ PARTS -->
+    <div>
+        <!-- GLOBAL STATS SUMMARY CARDS -->
+        <div class="stats-summary">
+            <div class="stats-card">
+                <div class="stats-label">Total Attempted</div>
+                <div class="stats-val cyan">{{ global_attempted }}</div>
+            </div>
+            <div class="stats-card highlight">
+                <div class="stats-label">Global Accuracy</div>
+                <div class="stats-val pink">{{ global_accuracy }}%</div>
+            </div>
+            <div class="stats-card">
+                <div class="stats-label">Daily Streak</div>
+                <div class="stats-val green">🔥 {{ streak }}</div>
+            </div>
+        </div>
+
+        <!-- PARTS SECTION -->
+        <div class="parts-container">
+            <h2 style="font-family: var(--font-heading); font-weight: 800; font-size: 1.5rem; text-transform: uppercase; margin-bottom: 10px;">Quiz Parts</h2>
+            
+            {% for p_id, p_data in parts.items() %}
+            <div class="part-row" id="part-{{ p_id }}">
+                <div class="part-info">
+                    <h3>Part {{ p_id }}</h3>
+                    {% if p_id == 1 %}
+                    <p>Questions 1-180</p>
+                    {% elif p_id == 2 %}
+                    <p>Questions 201-230</p>
+                    {% elif p_id == 3 %}
+                    <p>Questions 181-200, 231-250, 281-300, 331-350</p>
+                    {% elif p_id == 4 %}
+                    <p>Questions 371-672</p>
+                    {% endif %}
+                </div>
+
+                <div class="part-progress">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-family: var(--font-mono); color: var(--text-secondary);">
+                        <span>PROGRESS</span>
+                        <span>{{ p_data.completion }}%</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-fill" style="width: {{ p_data.completion }}%;"></div>
+                    </div>
+                </div>
+
+                <div class="part-stats-mini">
+                    <div>
+                        <div style="color: var(--text-secondary); font-size: 0.75rem;">ATTEMPTED</div>
+                        <div style="font-weight: 700; color: var(--neon-cyan);">{{ p_data.attempted }} / {{ p_data.total_questions }}</div>
+                    </div>
+                    <div>
+                        <div style="color: var(--text-secondary); font-size: 0.75rem;">ACCURACY</div>
+                        <div style="font-weight: 700; color: var(--neon-pink);">{{ p_data.accuracy }}%</div>
+                    </div>
+                </div>
+
+                <div class="part-actions">
+                    {% if p_data.attempted > 0 %}
+                    <a href="/quiz/{{ p_id }}" class="btn-primary" onclick="SoundEffects.playClick()">RESUME</a>
+                    <button class="btn-secondary" onclick="triggerPartReset({{ p_id }})">RESET</button>
+                    {% else %}
+                    <a href="/quiz/{{ p_id }}" class="btn-primary" onclick="SoundEffects.playClick()">START</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL: SIDEBAR (BADGES, IMPORT) -->
+    <div class="sidebar-panel">
+        <!-- BADGES BOX -->
+        <div class="panel-card">
+            <div class="panel-title">🏆 <span>BADGES & TROPHIES</span></div>
+            <div class="badges-grid">
+                <!-- Check and loop earned badges -->
+                {% set earned_ids = badges | map(attribute='badge_id') | list %}
+                
+                <div class="badge-item {% if 'first_blood' in earned_ids %}unlocked{% endif %}" title="Answered your first AWS SAA-C03 question.">
+                    <div class="badge-icon">🎯</div>
+                    <div class="badge-name">First Blood</div>
+                </div>
+                <div class="badge-item {% if 'perfectionist' in earned_ids %}unlocked{% endif %}" title="Answered 5 consecutive questions correctly.">
+                    <div class="badge-icon">🔥</div>
+                    <div class="badge-name">Flawless</div>
+                </div>
+                <div class="badge-item {% if 'streak_3' in earned_ids %}unlocked{% endif %}" title="Maintained a 3-day active streak.">
+                    <div class="badge-icon">⚡</div>
+                    <div class="badge-name">Consistent</div>
+                </div>
+                <div class="badge-item {% if 'aws_expert' in earned_ids %}unlocked{% endif %}" title="Achieved an accuracy of 80% or higher.">
+                    <div class="badge-icon">🧠</div>
+                    <div class="badge-name">Cloud Expert</div>
+                </div>
+                <div class="badge-item {% if 'part_1_finisher' in earned_ids %}unlocked{% endif %}" title="Completed all questions in Part 1.">
+                    <div class="badge-icon">🎓</div>
+                    <div class="badge-name">P1 Graduate</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BULK IMPORT BOX -->
+        <div class="panel-card">
+            <div class="panel-title">📥 <span>BULK JSON IMPORT</span></div>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">
+                Paste a list of AWS SAA-C03 questions in JSON format to bulk load them into your local database.
+            </p>
+            <textarea id="import-area" placeholder='[
+  {
+    "id": 181,
+    "question_text": "Question goes here...",
+    "options": ["A", "B", "C", "D"],
+    "correct_answer": "A",
+    "explanation": "Explanation content...",
+    "tags": "S3,EC2",
+    "difficulty": "Medium"
+  }
+]' style="width: 100%; height: 160px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: var(--font-mono); font-size: 0.8rem; padding: 10px; resize: none; margin-bottom: 12px;"></textarea>
+            <button id="import-btn" class="btn-primary" style="width: 100%;" onclick="runBulkImport()">LOAD QUESTIONS</button>
+        </div>
+    </div>
+</div>
+
+<!-- RESET CONFIRMATION MODAL -->
+<div class="modal-overlay" id="reset-modal">
+    <div class="modal-content">
+        <div class="modal-icon">⚠️</div>
+        <h3 class="modal-title" style="font-family: var(--font-heading); color: var(--neon-red); text-transform: uppercase;">Reset Progress?</h3>
+        <p class="modal-desc">Are you sure you want to reset Part <span id="reset-part-num"></span>? This will permanently erase all answer history, bookmarks, and score progress for this part.</p>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeResetModal()" style="border-color: var(--border-color); color: var(--text-primary);">CANCEL</button>
+            <button class="btn-primary" id="reset-confirm-btn" style="background: var(--neon-red); box-shadow: var(--glow-red);">CONFIRM RESET</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let activeResetPart = null;
+
+    function triggerPartReset(partId) {
+        SoundEffects.playClick();
+        activeResetPart = partId;
+        document.getElementById('reset-part-num').textContent = partId;
+        
+        // Show modal
+        const modal = document.getElementById('reset-modal');
+        modal.classList.add('active');
+    }
+
+    function closeResetModal() {
+        SoundEffects.playClick();
+        const modal = document.getElementById('reset-modal');
+        modal.classList.remove('active');
+        activeResetPart = null;
+    }
+
+    // Modal Actions
+    document.getElementById('reset-confirm-btn').addEventListener('click', () => {
+        if (activeResetPart !== null) {
+            SoundEffects.playWrong();
+            fetch(`/api/reset/${activeResetPart}`, {
+                method: 'POST'
+            })
+            .then(res => res.json())
+            .then(data => {
+                window.location.reload();
+            });
+        }
+    });
+
+    function runBulkImport() {
+        SoundEffects.playClick();
+        const text = document.getElementById('import-area').value.trim();
+        if (!text) {
+            alert('Please paste JSON data first.');
+            return;
+        }
+
+        try {
+            const parsed = JSON.parse(text);
+            fetch('/api/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(parsed)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    SoundEffects.playSuccess();
+                    alert(`Successfully imported ${data.imported_count} questions into the database!`);
+                    window.location.reload();
+                } else {
+                    alert(`Error: ${data.error}`);
+                }
+            })
+            .catch(err => {
+                alert(`Import failed: ${err}`);
+            });
+        } catch (e) {
+            alert(`Invalid JSON format: ${e.message}`);
+        }
+    }
+</script>
+{% endblock %}

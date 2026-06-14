@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AWS SAA-C03 Quiz Platform{% endblock %}</title>
+    
+    <!-- CSS Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Sound Synth & App logic -->
+    <script src="{{ url_for('static', filename='js/sound.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="cyber-header">
+            <a href="/" class="brand-section" onclick="SoundEffects.playClick()">
+                <div class="logo-glow">AWS SAA-C03 <span>⚡</span> QUIZ</div>
+            </a>
+            
+            <div class="header-controls">
+                <a href="/stats" class="control-btn" onclick="SoundEffects.playClick()">📊 ANALYTICS</a>
+                
+                {% if streak is defined and streak > 0 %}
+                <div class="streak-counter">🔥 <span>{{ streak }} DAYS</span></div>
+                {% else %}
+                <div class="streak-counter" style="color: var(--text-secondary); border-color: rgba(255,255,255,0.08); background: none;">🔥 <span>0 DAYS</span></div>
+                {% endif %}
+                
+                <button id="sound-toggle" class="control-btn" onclick="Quiz.toggleSound()">🔊 SOUND</button>
+                <button id="theme-toggle" class="control-btn" onclick="Quiz.toggleTheme()">⚡ CYBERPUNK</button>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT BLOCK -->
+        <main style="flex: 1; display: flex; flex-direction: column;">
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- FOOTER -->
+        <footer style="text-align: center; padding: 20px 0; color: var(--text-secondary); font-size: 0.85rem; font-family: var(--font-mono); border-top: 1px solid rgba(255,255,255,0.05); margin-top: 20px;">
+            AWS SAA-C03 OFFLINE-FIRST COMPANION
+        </footer>
+    </div>
+    
+    <script>
+        // Init sounds on user interaction to comply with browser autoplay policies
+        document.body.addEventListener('click', () => {
+            SoundEffects.init();
+        }, { once: true });
+    </script>
+</body>
+</html>

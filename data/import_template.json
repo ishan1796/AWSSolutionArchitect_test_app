@@ -1,0 +1,30 @@
+[
+  {
+    "id": 46,
+    "question_text": "A company wants to host a static website on AWS. The website contents consist of HTML, CSS, and client-side JavaScript. Which solution is the MOST cost-effective for hosting this website?",
+    "options": [
+      "Deploy a web server on an Amazon EC2 instance to host the website.",
+      "Create an Amazon S3 bucket and host the website there.",
+      "Containerize the website and host it in AWS Fargate.",
+      "Configure an Application Load Balancer with an AWS Lambda target."
+    ],
+    "correct_answer": "B",
+    "explanation": "Amazon S3 static website hosting is the most cost-effective solution for static websites containing HTML, CSS, client-side JS, and images, with no server maintenance.",
+    "tags": "S3,Static Web Hosting,Storage",
+    "difficulty": "Easy"
+  },
+  {
+    "id": 47,
+    "question_text": "Type your second question here...",
+    "options": [
+      "Option A",
+      "Option B",
+      "Option C",
+      "Option D"
+    ],
+    "correct_answer": "A",
+    "explanation": "Type the explanation here...",
+    "tags": "Service1,Service2",
+    "difficulty": "Medium"
+  }
+]

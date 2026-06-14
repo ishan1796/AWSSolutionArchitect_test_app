@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}Analytics // AWS SAA-C03 Quiz Platform{% endblock %}
+
+{% block content %}
+<div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+    <h2 style="font-family: var(--font-heading); font-weight: 800; font-size: 1.6rem; text-transform: uppercase;">
+        📊 Analytics & Performance Report
+    </h2>
+    <button class="btn-primary" onclick="window.print()" style="background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple)); box-shadow: var(--glow-pink);">
+        🖨️ EXPORT REPORT (PDF)
+    </button>
+</div>
+
+<div class="stats-layout" style="margin-top: 20px;">
+    <!-- LEFT PANEL: WEAKNESS ANALYSIS BY SERVICE TAG -->
+    <div class="panel-card">
+        <div class="panel-title">🧠 <span>Weak Areas & Service Tags</span></div>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px; line-height: 1.4;">
+            This table ranks AWS services by accuracy. Focus on services marked with <span style="color: var(--neon-red); font-weight: 700;">low accuracy</span> to improve your certification readiness.
+        </p>
+        
+        <div style="overflow-x: auto;">
+            <table class="tags-table" id="tags-stats-table">
+                <thead>
+                    <tr>
+                        <th>AWS Service Tag</th>
+                        <th>DB Total</th>
+                        <th>Attempted</th>
+                        <th>Accuracy</th>
+                    </tr>
+                </thead>
+                <tbody id="tags-stats-body">
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 30px;">
+                            Loading tag diagnostics...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL: PART BREAKDOWNS & SUMMARY -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+        <!-- STATS SUMMARY CARD -->
+        <div class="panel-card">
+            <div class="panel-title">🏆 <span>Part Performance Metrics</span></div>
+            <div id="parts-stats-container" style="display: flex; flex-direction: column; gap: 15px;">
+                <!-- Dynamically loaded -->
+                <div style="text-align: center; color: var(--text-secondary); padding: 30px;">
+                    Loading performance values...
+                </div>
+            </div>
+        </div>
+
+        <!-- MOCK TEST SIMULATOR -->
+        <div class="panel-card" style="border-color: var(--neon-purple); position: relative; overflow: hidden;">
+            <div class="panel-title" style="color: var(--neon-purple); text-shadow: 0 0 10px rgba(157, 78, 221, 0.4);">
+                🎮 <span>MOCK TEST SIMULATOR</span>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px; line-height: 1.4;">
+                Simulate a real AWS SAA-C03 exam! Answer 65 random questions from any part under a strict 130-minute timer.
+            </p>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <span style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--neon-purple);">STATUS: SIMULATION READY</span>
+                <button class="btn-primary" style="background: linear-gradient(135deg, var(--neon-purple), var(--neon-pink)); box-shadow: 0 0 15px rgba(157, 78, 221, 0.4);" onclick="startMockTest()">
+                    LAUNCH MOCK TEST
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        SoundEffects.init();
+        fetch('/api/stats')
+            .then(res => res.json())
+            .then(data => {
+                renderTagStats(data.tags_stats);
+                renderPartStats(data.parts_stats);
+            })
+            .catch(err => {
+                console.error("Error loading stats:", err);
+            });
+    });
+
+    function renderTagStats(tagStats) {
+        const tbody = document.getElementById('tags-stats-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        if (!tagStats || tagStats.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 30px;">
+                        No question history recorded yet. Start taking quizzes to see weakness analysis!
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tagStats.forEach(item => {
+            const tr = document.createElement('tr');
+            
+            // Choose color classification pill
+            let pillClass = 'high';
+            if (item.accuracy < 50) {
+                pillClass = 'low';
+            } else if (item.accuracy < 80) {
+                pillClass = 'med';
+            }
+
+            tr.innerHTML = `
+                <td style="font-weight: 600; font-family: var(--font-body);">${item.tag}</td>
+                <td style="font-family: var(--font-mono);">${item.total_questions}</td>
+                <td style="font-family: var(--font-mono);">${item.attempted}</td>
+                <td><span class="accuracy-pill ${pillClass}">${item.accuracy}%</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderPartStats(partsStats) {
+        const container = document.getElementById('parts-stats-container');
+        if (!container) return;
+        container.innerHTML = '';
+
+        partsStats.forEach(item => {
+            const row = document.createElement('div');
+            row.style.background = 'rgba(255,255,255,0.02)';
+            row.style.border = '1px solid var(--border-color)';
+            row.style.borderRadius = '10px';
+            row.style.padding = '15px';
+            row.style.display = 'flex';
+            row.style.justifyContent = 'space-between';
+            row.style.alignItems = 'center';
+            row.style.flexWrap = 'wrap';
+            row.style.gap = '10px';
+
+            const completion = item.total > 0 ? Math.round((item.attempted / item.total) * 100) : 0;
+
+            row.innerHTML = `
+                <div>
+                    <h4 style="font-family: var(--font-heading); font-weight: 700; margin-bottom: 2px;">Part ${item.part} Breakdown</h4>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); font-family: var(--font-mono);">
+                        Attempted: ${item.attempted} / ${item.total} (${completion}%)
+                    </p>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-family: var(--font-mono); font-weight: 700; color: var(--neon-cyan); font-size: 1.1rem;">
+                        ${item.correct} Correct
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); font-family: var(--font-mono);">
+                        Accuracy: ${item.accuracy}%
+                    </div>
+                </div>
+            `;
+            container.appendChild(row);
+        });
+    }
+
+    function startMockTest() {
+        SoundEffects.playSuccess();
+        alert("Simulating standard AWS SAA-C03 mock exam. Loading 65 random questions under a 130-minute exam timer...");
+        // Select part 1 as default launcher or redirect
+        window.location.href = '/quiz/1?mock=true';
+    }
+</script>
+{% endblock %}
