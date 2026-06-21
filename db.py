@@ -1,10 +1,23 @@
 import sqlite3
 import json
 import os
+import shutil
 from datetime import datetime
 
 DATABASE_DIR = os.path.join(os.path.dirname(__file__), 'database')
 DATABASE_PATH = os.path.join(DATABASE_DIR, 'quiz.db')
+
+# If running on Vercel, copy the pre-existing db to /tmp/quiz.db (which is writable)
+if os.environ.get('VERCEL') == '1' or os.environ.get('VERCEL_ENV'):
+    VERCEL_DB_PATH = '/tmp/quiz.db'
+    if not os.path.exists(VERCEL_DB_PATH):
+        # Create /tmp directory if not exists
+        os.makedirs('/tmp', exist_ok=True)
+        # If the repository database exists, copy it as seed
+        if os.path.exists(DATABASE_PATH):
+            shutil.copy2(DATABASE_PATH, VERCEL_DB_PATH)
+    # Set the DATABASE_PATH to the writable /tmp path
+    DATABASE_PATH = VERCEL_DB_PATH
 
 def get_part_for_id(q_id):
     """
@@ -57,8 +70,9 @@ def init_db():
     """
     Initializes the SQLite database tables if they do not exist.
     """
-    if not os.path.exists(DATABASE_DIR):
-        os.makedirs(DATABASE_DIR)
+    db_dir = os.path.dirname(DATABASE_PATH)
+    if db_dir and not os.path.exists(db_dir):
+        os.makedirs(db_dir, exist_ok=True)
 
     conn = get_db_connection()
     cursor = conn.cursor()
