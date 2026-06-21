@@ -1,4 +1,7 @@
 # AWS SAA-C03 Quiz Platform
+# https://aws-solution-architect-test-app.vercel.app/
+
+please drop a star if it was helpful
 
 A premium offline-first certification quiz engine built with Python Flask and SQLite, designed with a modern Cyberpunk Dark Mode UI.
 
